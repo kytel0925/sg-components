@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <title>Experimentos javascipt</title>
+    </head>
+    <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="bower_components/blueimp-file-upload/js/jquery.fileupload.js"></script>
+    <body>
+        <input id="fileupload" type="file" name="files[]" data-url="upload.php" multiple>
+        <script type="text/javascript">
+            $(function () {
+                $('#fileupload').fileupload({
+                    dataType: 'json',
+                    done: function (e, data) {
+                        console.log('Upload done');
+                        console.log(e);
+                        console.log(data);
+                    }
+                });
+            });
+        </script>        
+    </body>
+</html>

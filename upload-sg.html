@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <title>Uploader component</title>
+        <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+        <script type="text/javascript" src="bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js"></script>
+        <script type="text/javascript" src="bower_components/blueimp-file-upload/js/jquery.fileupload.js"></script>
+        
+        <script type="text/javascript" src="ButtonUploader.js"></script>
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <!--
+        Virtual nodes React, Angular
+        <button-uploader 
+            data-url="upload.php" 
+            single="true" 
+            folder="private/unknow" 
+            maxSize="128MB"
+            label="Cargar..."
+            fileTypes="jpg,pdf,xlx,xlsx,docx,doc,zip,rar,gz"
+        >
+            <onUpload>someCallBack</onUpload>
+            <onUploadComplete>someCallBack</onUploadComplete>
+            <onUploadSuccess>someCallBack</onUploadSuccess>
+            <onUploadError>someCallBack</onUploadError>
+            <onUploadFailuer>someCallBack</onUploadFailure>
+            
+            <onError>someCallBack</onError>
+            <onProgress>someCallBack</onProgress>
+            <onBusy>someCallBack</onBusy>
+        </button-uploader>
+        -->
+        <style>
+            .fileinput-button {
+                display: inline-block;
+                overflow: hidden;
+                position: relative;
+            }
+            .fileinput-button input {
+                cursor: pointer;
+                direction: ltr;
+                font-size: 200px;
+                margin: 0;
+                opacity: 0;
+                position: absolute;
+                right: 0;
+                top: 0;
+            }
+            @media screen {
+                .fileinput-button input {
+                    font-size: 100%;
+                    height: 100%;
+                }
+            }
+        </style>
+        <div class="button-uploader" 
+             data-options='{"url":"upload.php", "single":true, "folder":"private/unknow", "maxSize": "128MB", "labels": {"ready": "Cargar...", "uploading": "Cargango..."}, "fileTypes": "jpg,pdf,xlx,xlsx,docx,doc,zip,rar,gz"}'
+             data-callbacks='{
+                             "onUpload": someCallBack, 
+                             "onUploadComplete": someCallBack,  
+                             "onUploadSuccess": someCallBack,  
+                             "onUploadError": someCallBack,  
+                             "onUploadFailuer": someCallBack,  
+                             "onError": someCallBack,  
+                             "onProgress": someCallBack,  
+                             "onBusy": someCallBack 
+                             }'
+        ></div>
+        <script type="text/javascript">
+            ButtonUploader.new('.button-uploader');
+            function someCallBack(){
+                console.log(arguments);
+            }
+        </script>
+    </body>
+</html>
