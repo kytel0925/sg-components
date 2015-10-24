@@ -1,87 +1,103 @@
 /**
 * SGComponent Clase base
 */
-(function(){
+(function($){
+    var evalString = function(string){
+        try{ return JSON.parse(string); }
+        catch(ex){}
+
+        try{ return eval("(" + string + ")") }
+        catch(ex){}
+
+        return {};
+    }
+    
     this.SGComponent = Class.extend({
-        init: function(){
-            this._name = 'SGComponent';
-            this._author = 'Telmo Riofrio <telmo.riofrio@funiber.org>';
-            this._callbacks = {};
-            this._options = {};
-            this._version = '0.0.1';
+        init: function(element, options, callbacks){
+            var callbaks = $.extend({
+                onClick: function(){}
+            }, callbacks || {}, evalString($(element).attr('data-callbacks')));
             
-            this.name = function(){ return this._name; }
-            this.author = function(){ return this._author; }
+            var options = $.extend({
+                url: null
+            }, options || {}, evalString($(element).attr('data-options')));
+            
+            //Getters for private properties
+            this.options = function(){ return options; }
+            this.callbacks = function(){ return callbaks; }
+            this.rawNode = function(){ return _rawNode; }
+            
+            //Private method
+            var attach = function(){
+                element.sgComponent = this;
+                this.domNode = element;
+            }
+            
+            //Create the new reder node
+            var _rawNode = $(this.protoRender);
+            
+            //Clear the element
+            $(element).empty();
+            //Equivalente a render de React
+            $(element).append(_rawNode);
+            //nos agregamos al arbol DOM
+            attach();
+            
+            //Iniciamos el comoponente
+            this.setCustomComponent();
         },
         
-        //Instance context
-        callbacks: function(){ return this._name; },
-        options: function(){ return this._options; },
-        destroy: function(){ },
-        events: function(){ return this._events; },
-        version: function(){ return this._version; }
+        setCustomComponent: function(){console.log('If you see this, you don\'t finish you work yet');},
+        protoRender: "<span>redeclare this part</span>",
     });
-
+    
     //Static context
-    this.SGComponent.evalString = function(string){
-            try{ return JSON.parse(string); }
-            catch(ex){}
+    this.SGComponent.evalString = evalString;
+})(jQuery);
 
-            try{ return eval("(" + string + ")") }
-            catch(ex){}
-
-            return {};
+(function($){
+    this.ButtonUploader = SGComponent.extend({
+        init: function(element){
+            var options = {
+                labels: {
+                    ready: 'Upload',
+                    uploading: 'Uploading'
+                }
+            };
+            this._super(element, options);
+            
+            //Some others initializations
+        },
+        
+        setCustomComponent: function(){
+            var _rawUploader = this.rawNode();
+            var options = this.options();
+            $('span.btn-label', _rawUploader).html(options.labels.ready);
+            
+            $('input[type=file]', _rawUploader).fileupload({
+                url: options.url,
+                dataType: 'json',
+                done: function(e, data){
+                    console.log(e); console.log(data);
+                },
+                progressall: function(e, data){
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+                    /*$('#progress .progress-bar').css(
+                        'width',
+                        progress + '%'
+                    );*/
+                    console.log(progress);
+                }
+            });
+        },
+        protoRender: "<span class='btn btn-success fileinput-button'><span class='btn-label'></span><input type='file' /></span>"
+    });
+    
+    this.ButtonUploader.create = function(selector){
+        $(selector).each(this.createEach);
     };
     
-    this.OtraMierda = this.SGComponent.extend({
-        init: function(){
-            this._super();
-            
-            this._name = 'Otro componente';
-        }
-    });
-})();
-
-var uno = new SGComponent();
-uno.someShit = 'valor 1';
-var dos = new OtraMierda();
-dos.someShit = 'valor 2';
-
-console.log(uno.name());
-console.log(dos.name());
-
-var ButtonUploader = {
-    someShit: 'someShit',
-    new: function(selector){
-        //Aqui viene mucho codigo encapsulable
-        $(selector).each(this.set);
-    },
-    
-    set: function(index, element){
-        var options = SGComponent.evalString(element.getAttribute('data-options'));
-        var callbacks = SGComponent.evalString(element.getAttribute('data-callbacks'));
-        
-        $(element).empty();
-        
-        var _rawUploader = $("<span class='btn btn-success fileinput-button'><span class='btn-label'></span><input type='file' /></span>");
-        $('span.btn-label', _rawUploader).html(options.labels.ready);
-        
-        $('input[type=file]', _rawUploader).fileupload({
-            url: options.url,
-            dataType: 'json',
-            done: function(e, data){
-                console.log(e); console.log(data);
-            },
-            progressall: function(e, data){
-                var progress = parseInt(data.loaded / data.total * 100, 10);
-                /*$('#progress .progress-bar').css(
-                    'width',
-                    progress + '%'
-                );*/
-                console.log(progress);
-            }
-        });
-        
-        $(element).append(_rawUploader);
-    }
-}
+    this.ButtonUploader.createEach = function(index, element){
+        return new ButtonUploader(element);
+    };
+})(jQuery);
