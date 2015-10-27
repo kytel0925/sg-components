@@ -11,93 +11,105 @@
 
         return {};
     }
-    
+
+    var attach = function(component, element){
+        element.sgComponent = component;
+        component.domNode = element;
+    }
+
+    var setCustomComponent = function(){console.log('If you see this, you don\'t finish you work yet');}
+
     this.SGComponent = Class.extend({
         init: function(element, options, callbacks){
-            var callbaks = $.extend({
-                onClick: function(){}
-            }, callbacks || {}, evalString($(element).attr('data-callbacks')));
-            
-            var options = $.extend({
-                url: null
-            }, options || {}, evalString($(element).attr('data-options')));
-            
-            //Getters for private properties
-            this.options = function(){ return options; }
-            this.callbacks = function(){ return callbaks; }
-            this.rawNode = function(){ return _rawNode; }
-            
-            //Private method
-            var attach = function(){
-                element.sgComponent = this;
-                this.domNode = element;
-            }
+            this.callbacks = $.extend(this._callbacks, callbacks || {}, evalString($(element).attr('data-callbacks')));
+            this.options = $.extend(this._options, options || {}, evalString($(element).attr('data-options')));
+            //nos agregamos al arbol DOM
+            attach(this, element);
             
             //Create the new reder node
-            var _rawNode = $(this.protoRender);
+            this._rawNode = $(this.protoRender);
             
             //Clear the element
             $(element).empty();
             //Equivalente a render de React
-            $(element).append(_rawNode);
-            //nos agregamos al arbol DOM
-            attach();
-            
+            $(element).append(this._rawNode);
             //Iniciamos el comoponente
             this.setCustomComponent();
         },
-        
-        setCustomComponent: function(){console.log('If you see this, you don\'t finish you work yet');},
+
+        domNode: null,
+        _callbacks: {},
+        _options: {},
         protoRender: "<span>redeclare this part</span>",
+        setCustomComponent: setCustomComponent
     });
     
-    //Static context
+    //Static context shared methods
     this.SGComponent.evalString = evalString;
 })(jQuery);
 
 (function($){
+    var callbacks = {
+        onUpload: function(){},
+        onUploadStart: function(){},
+        onUploadEnd: function(){},
+        onUploadSuccess: function(e, data){ console.log(data); },
+        onUploadError: function(){},
+        onUploadFailure: function(){},
+
+        onProgress: function(e, data){console.log(parseInt(data.loaded / data.total * 100, 10));},
+        onError: function(){},
+
+        //Old callback for busy transaction
+        onBusy: function(){}
+    }
+
+    var setCustomComponent = function(){
+        var _rawUploader = this._rawNode;
+        var options = this.options;
+        var callbacks = this.callbacks;
+
+        var inputFile = $('input[type=file]', _rawUploader);
+        $('span.btn-label', _rawUploader).html(options.labels.ready);
+        inputFile.fileupload(options);
+
+        //https://github.com/blueimp/jQuery-File-Upload/wiki/Options#add
+        //var mapCallbacks = ['fileuploadadd', 'fileuploadsubmit', 'fileuploadsend', 'fileuploaddone', 'fileuploadfail', 'fileuploadalways', 'fileuploadprogress', 'fileuploadprogressall.onProgress', 'fileuploadstart', 'fileuploadstop', 'fileuploadchange', 'fileuploadpaste', 'fileuploaddrop', 'fileuploaddragover', 'fileuploadchunksend', 'fileuploadfail', 'fileuploadalways'];
+        var mapCallbacks = ['fileuploadadd', 'fileuploadsubmit', 'fileuploadsend', 'fileuploaddone->onUploadSuccess', 'fileuploadfail', 'fileuploadalways', 'fileuploadprogress', 'fileuploadprogressall->onProgress', 'fileuploadstart', 'fileuploadstop', 'fileuploadchange', 'fileuploadpaste', 'fileuploaddrop', 'fileuploaddragover', 'fileuploadchunksend', 'fileuploadfail', 'fileuploadalways'];
+        $.each(mapCallbacks, function(index, mapCall){
+            var _map = mapCall.split('->');
+            (_map.length > 1) && inputFile.bind(_map[0], callbacks[_map[1]]);
+        });
+    }
+
     this.ButtonUploader = SGComponent.extend({
         init: function(element){
-            var options = {
-                labels: {
-                    ready: 'Upload',
-                    uploading: 'Uploading'
-                }
-            };
-            this._super(element, options);
-            
-            //Some others initializations
+            this._super(element);
         },
+
+        _options: {
+            url: false,
+            dataType: 'json',
+            paramName: 'files[]',
+            multipleUploads: null,
+            formData: {},
+            labels: {
+                ready: 'Upload',
+                uploading: 'Uploading'
+            }
+        },
+        //Algo de documentacion por favor gracias
+        _callbacks: callbacks,
         
-        setCustomComponent: function(){
-            var _rawUploader = this.rawNode();
-            var options = this.options();
-            $('span.btn-label', _rawUploader).html(options.labels.ready);
-            
-            $('input[type=file]', _rawUploader).fileupload({
-                url: options.url,
-                dataType: 'json',
-                done: function(e, data){
-                    console.log(e); console.log(data);
-                },
-                progressall: function(e, data){
-                    var progress = parseInt(data.loaded / data.total * 100, 10);
-                    /*$('#progress .progress-bar').css(
-                        'width',
-                        progress + '%'
-                    );*/
-                    console.log(progress);
-                }
-            });
-        },
+        setCustomComponent: setCustomComponent,
         protoRender: "<span class='btn btn-success fileinput-button'><span class='btn-label'></span><input type='file' /></span>"
     });
-    
+
     this.ButtonUploader.create = function(selector){
         $(selector).each(this.createEach);
-    };
-    
+    }
+
     this.ButtonUploader.createEach = function(index, element){
         return new ButtonUploader(element);
-    };
+    }
 })(jQuery);
